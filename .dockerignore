@@ -1,0 +1,11 @@
+.git
+.github
+.venv
+**/__pycache__
+**/node_modules
+apps/web
+poc
+spike
+output_regulator.kicad_sch
+.env
+*.env

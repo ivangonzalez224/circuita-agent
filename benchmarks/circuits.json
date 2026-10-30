@@ -1,0 +1,174 @@
+[
+  {
+    "id": "led-resistor-battery",
+    "prompt": "A red LED with its current-limiting resistor powered by a 3.3 V battery.",
+    "expect_categories": [
+      "led",
+      "resistor",
+      "battery"
+    ]
+  },
+  {
+    "id": "esp32-led",
+    "prompt": "An ESP32 that blinks a red LED on GPIO25 through a resistor. Power it from a 3.3 V battery.",
+    "expect_categories": [
+      "module",
+      "led",
+      "resistor"
+    ]
+  },
+  {
+    "id": "esp32-pot",
+    "prompt": "Read a 10k potentiometer with the ADC of an ESP32 on GPIO34. Power from a 3.3 V battery.",
+    "expect_categories": [
+      "module",
+      "potentiometer"
+    ]
+  },
+  {
+    "id": "esp32-bme280",
+    "prompt": "An ESP32 reading a BME280 over I2C with pull-up resistors, powered by a 3.3 V battery.",
+    "expect_categories": [
+      "module",
+      "sensor",
+      "resistor"
+    ]
+  },
+  {
+    "id": "esp32-mpu-oled",
+    "prompt": "ESP32 with an MPU-6050 and an SSD1306 OLED on the same I2C bus, with pull-ups, 3.3 V battery.",
+    "expect_categories": [
+      "module",
+      "sensor",
+      "resistor"
+    ]
+  },
+  {
+    "id": "esp32-dht22",
+    "prompt": "ESP32 reading a DHT22 temperature sensor on GPIO4 with a 10k pull-up. 3.3 V battery.",
+    "expect_categories": [
+      "module",
+      "sensor",
+      "resistor"
+    ]
+  },
+  {
+    "id": "esp32-ds18b20",
+    "prompt": "ESP32 with a DS18B20 probe on GPIO5 and the 4.7k pull-up it needs. 3.3 V battery.",
+    "expect_categories": [
+      "module",
+      "sensor",
+      "resistor"
+    ]
+  },
+  {
+    "id": "battery9v-5v",
+    "prompt": "Power a circuit from a 9 V battery with a 5 V regulator and decoupling capacitors on input and output.",
+    "expect_categories": [
+      "battery",
+      "regulator",
+      "capacitor"
+    ]
+  },
+  {
+    "id": "lipo-s3",
+    "prompt": "Power an ESP32-S3 from a 3.7 V LiPo battery using a 3.7V to 3.3V regulator with capacitors.",
+    "expect_categories": [
+      "module",
+      "battery",
+      "regulator"
+    ]
+  },
+  {
+    "id": "esp32-relay",
+    "prompt": "An ESP32 switching a 1-channel relay module from GPIO26, with a 5 V supply for the relay and 3.3 V for the ESP32.",
+    "expect_categories": [
+      "module",
+      "battery"
+    ]
+  },
+  {
+    "id": "esp32-mic",
+    "prompt": "ESP32 with an INMP441 I2S microphone. 3.3 V battery.",
+    "expect_categories": [
+      "module",
+      "sensor"
+    ]
+  },
+  {
+    "id": "esp32-amp",
+    "prompt": "ESP32 driving a MAX98357A I2S amplifier and a speaker. Use a 5 V battery for the amplifier.",
+    "expect_categories": [
+      "module",
+      "speaker"
+    ]
+  },
+  {
+    "id": "s3-display",
+    "prompt": "An ESP32-S3 driving an ST7796 SPI TFT display. 3.3 V battery.",
+    "expect_categories": [
+      "module"
+    ]
+  },
+  {
+    "id": "esp32-gps",
+    "prompt": "ESP32 reading a NEO-6M GPS over UART. 3.3 V battery.",
+    "expect_categories": [
+      "module"
+    ]
+  },
+  {
+    "id": "esp32-button",
+    "prompt": "A push button wired to an ESP32 input with a pull-up resistor. 3.3 V battery.",
+    "expect_categories": [
+      "module",
+      "switch",
+      "resistor"
+    ]
+  },
+  {
+    "id": "two-leds",
+    "prompt": "An ESP32 driving two LEDs (red on GPIO25, green on GPIO26), each with its own resistor. 3.3 V battery.",
+    "expect_categories": [
+      "module",
+      "led",
+      "resistor"
+    ]
+  },
+  {
+    "id": "divider-adc",
+    "prompt": "A 10k/10k resistor divider from a 5 V battery whose midpoint goes to an ESP32 ADC pin. Power the ESP32 from 3.3 V.",
+    "expect_categories": [
+      "module",
+      "resistor",
+      "battery"
+    ]
+  },
+  {
+    "id": "esp32-two-i2c",
+    "prompt": "An ESP32 with a BH1750 light sensor and a BME280 on one shared I2C bus with pull-ups. 3.3 V battery.",
+    "expect_categories": [
+      "module",
+      "sensor",
+      "resistor"
+    ]
+  },
+  {
+    "id": "pot-led",
+    "prompt": "A potentiometer on ESP32 GPIO34 sets the brightness of an LED on GPIO25 (through a resistor). 3.3 V battery.",
+    "expect_categories": [
+      "module",
+      "potentiometer",
+      "led"
+    ]
+  },
+  {
+    "id": "esp32-oled-button-led",
+    "prompt": "ESP32 with an SSD1306 OLED on I2C, a push button on GPIO27 with pull-up, and a red LED with resistor on GPIO25. 3.3 V battery.",
+    "expect_categories": [
+      "module",
+      "switch",
+      "led"
+    ]
+  }
+]

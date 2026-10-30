@@ -1,0 +1,2 @@
+[console_scripts]
+circuita-agent = circuita_agent.cli:main
