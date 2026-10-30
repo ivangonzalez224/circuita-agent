@@ -26,7 +26,8 @@ Hackathon (which started on 2026-10-26). To keep that boundary clear:
 turns a natural-language description into a validated, laid-out circuit and exports it to
 KiCad. It has a FastAPI backend (compiler, electrical validator, component library with real
 pinouts, layout engine, KiCad exporter) and a web interface, and it used Gemini as its language
-model. It runs as a hosted service and this repository only calls its HTTP API.
+model. It is not hosted publicly. This repository only calls its HTTP API, so running the agent
+against a real model needs a circuita instance (see "Trying it without circuita").
 
 **Written during the hackathon, in this repository (everything here):**
 - the agent loop and its repair logic (`agent.py`),
@@ -34,6 +35,7 @@ model. It runs as a hosted service and this repository only calls its HTTP API.
 - the HTTP client for the circuita API (`circuita_client.py`),
 - the integration with Meta's Model API (`model.py`) and the prompts (`prompts.py`),
 - the benchmark that compares one-shot generation with the repair loop (`benchmark.py`),
+- the replay viewer and run recording (`viewer.py`, `viewer.html`, `--save` and `view` in `cli.py`),
 - the command line (`cli.py`) and the test suite (`tests/`).
 
 **Changed in circuita during the hackathon (code lives in the private repository):** an API-key
@@ -66,13 +68,31 @@ repair loop). A circuit passes when it compiles, the validator finds zero errors
 expected component categories are present. It stops by itself when the estimated cost reaches
 `--max-cost-usd`.
 
-## Setup
+### How Meta's models are used
 
-Requires Python 3.12+ and a running circuita API.
+The agent talks to Meta's Model API (`https://api.meta.ai/v1`, OpenAI-compatible) with
+`muse-spark-1.3`, using tool calling. The model name and base URL are environment variables
+(`MODEL_NAME`, `MODEL_BASE_URL`), so any OpenAI-compatible host of a Meta open-weight model works
+without code changes. The cost of each run is estimated from the token usage the API reports.
+
+## Trying it without circuita
+
+You do not need circuita or a model key to see how this works:
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
+pytest -q                               # whole suite: fake circuita API and scripted model
+python -m circuita_agent view --sample  # replay of an example run (simulated, labelled as such)
+```
+
+The bundled sample is a scripted example, not model output, and the viewer says so on screen.
+
+## Setup (with a circuita instance)
+
+Requires Python 3.12+ and a running circuita API.
+
+```bash
 cp .env.example .env        # then fill in MODEL_API_KEY (never commit .env)
 python -m circuita_agent check
 ```
