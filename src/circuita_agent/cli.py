@@ -3,6 +3,7 @@
 import argparse
 import json
 import sys
+import webbrowser
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -12,6 +13,7 @@ from circuita_agent.circuita_client import CircuitaClient, CircuitaError
 from circuita_agent.config import Settings
 from circuita_agent.model import ChatCompletionsModel, ModelError, estimate_cost
 from circuita_agent.tools import ToolRunner
+from circuita_agent.viewer import build_record, load_record, render_viewer, sample_record
 
 DEFAULT_CASES = Path("benchmarks/circuits.json")
 
@@ -49,6 +51,13 @@ def cmd_run(settings: Settings, args: argparse.Namespace) -> int:
         print(f"model error: {exc}", file=sys.stderr)
         return 2
     _print_result(result, settings, as_json=args.json)
+    if args.save:
+        cost = estimate_cost(settings.model_name, result.prompt_tokens, result.completion_tokens)
+        record = build_record(result, model=settings.model_name, cost_usd=cost)
+        save = Path(args.save)
+        save.parent.mkdir(parents=True, exist_ok=True)
+        save.write_text(json.dumps(record, indent=2, ensure_ascii=False))
+        print(f"Saved run to {save}. Replay it with: circuita-agent view {save}", file=sys.stderr)
     return 0 if result.success else 1
 
 
@@ -68,6 +77,28 @@ def _print_result(result: AgentResult, settings: Settings, *, as_json: bool) -> 
         print(f"error: {result.error_message}")
     if result.final_text:
         print(f"\n{result.final_text}")
+
+
+def cmd_view(args: argparse.Namespace) -> int:
+    """Write a self-contained HTML replay of a saved run. Costs nothing."""
+    if args.sample:
+        record = sample_record()
+    elif args.path:
+        try:
+            record = load_record(Path(args.path))
+        except (OSError, ValueError) as exc:
+            print(f"cannot read the run: {exc}", file=sys.stderr)
+            return 2
+    else:
+        print("give a saved run (from `run --save`) or use --sample", file=sys.stderr)
+        return 2
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(render_viewer(record), encoding="utf-8")
+    print(f"Wrote {out}")
+    if not args.no_open:
+        webbrowser.open(out.resolve().as_uri())
+    return 0
 
 
 def cmd_benchmark(settings: Settings, args: argparse.Namespace) -> int:
@@ -108,6 +139,12 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--max-turns", type=int, default=8)
     run.add_argument("--export-dir", default="out")
     run.add_argument("--json", action="store_true")
+    run.add_argument("--save", metavar="PATH", help="also save the run as JSON for `view`")
+    view = sub.add_parser("view", help="build an HTML replay of a saved run")
+    view.add_argument("path", nargs="?", help="a file written by `run --save`")
+    view.add_argument("--sample", action="store_true", help="use the bundled simulated run")
+    view.add_argument("--out", default="out/run.html")
+    view.add_argument("--no-open", action="store_true", help="do not open the browser")
     bench = sub.add_parser("benchmark", help="compare single-shot against the repair loop")
     bench.add_argument("--cases", default=str(DEFAULT_CASES))
     bench.add_argument("--limit", type=int, default=100)
@@ -121,6 +158,8 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     settings = Settings.from_env()
+    if args.command == "view":
+        return cmd_view(args)
     if args.command == "check":
         return cmd_check(settings)
     if args.command == "run":

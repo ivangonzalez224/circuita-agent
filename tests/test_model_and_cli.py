@@ -112,3 +112,14 @@ def test_cli_benchmark_writes_a_report(patched_cli, capsys, tmp_path):
     report = json.loads(out.read_text())
     assert report["summary"]["single"]["cases"] == 2 and report["rows"]
     assert "| mode |" in capsys.readouterr().out
+
+
+def test_cli_run_save_writes_a_run_the_viewer_can_open(patched_cli, tmp_path):
+    saved = tmp_path / "runs" / "run.json"
+    code = cli.main(["run", "an LED", "--export-dir", str(tmp_path), "--save", str(saved)])
+    assert code == 0
+    record = json.loads(saved.read_text())
+    assert record["simulated"] is False and record["result"]["success"] is True
+    html = tmp_path / "run.html"
+    assert cli.main(["view", str(saved), "--out", str(html), "--no-open"]) == 0
+    assert "an LED" in html.read_text(encoding="utf-8")

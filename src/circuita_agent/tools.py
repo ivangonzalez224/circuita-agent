@@ -154,8 +154,12 @@ def summarize_design(response: dict[str, Any]) -> dict[str, Any]:
     label: dict[str, str] = {}
     components = []
     for comp in canvas["components"]:
+        names = [pin.get("name") for pin in comp["pins"] if pin.get("name")]
         for pin in comp["pins"]:
-            label[pin["id"]] = f"{comp['reference']}.{pin.get('name') or pin['number']}"
+            name = pin.get("name")
+            # A name shared by several pins (the GND pins of an ESP32) cannot identify one pin.
+            ident = name if name and names.count(name) == 1 else pin["number"]
+            label[pin["id"]] = f"{comp['reference']}.{ident}"
         components.append(
             {
                 "reference": comp["reference"],

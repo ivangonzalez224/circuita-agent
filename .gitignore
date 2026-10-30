@@ -1,2 +1,10 @@
 
 out/
+.env
+__pycache__/
+*.pyc
+out/
+runs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

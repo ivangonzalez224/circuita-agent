@@ -93,6 +93,19 @@ and a scripted model stand in for the real ones.
 ruff check src tests && mypy src && pytest -q
 ```
 
+## Replay viewer
+
+Every run can be saved and replayed as a single HTML page (no server, no external assets):
+
+```bash
+python -m circuita_agent run "An ESP32 that reads a potentiometer and lights an LED" --save runs/first.json
+python -m circuita_agent view runs/first.json        # writes out/run.html and opens it
+python -m circuita_agent view --sample               # bundled example, clearly marked as simulated
+```
+
+The page shows the request, how the number of validation errors drops after each fix, and the
+circuit after each step with what changed highlighted. Keys: space plays, arrows step.
+
 ## Benchmark results
 
 _To be filled in with real runs._

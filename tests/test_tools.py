@@ -92,3 +92,27 @@ def test_parse_arguments():
         except ValueError:
             continue
         raise AssertionError(bad)
+
+
+def test_pins_that_share_a_name_are_labelled_by_number():
+    from circuita_agent.tools import summarize_design
+
+    response = {
+        "design_id": "d",
+        "canvas": {
+            "components": [
+                {
+                    "reference": "U1",
+                    "category": "module",
+                    "pins": [
+                        {"id": "u1.1", "number": "1", "name": "GND"},
+                        {"id": "u1.2", "number": "2", "name": "3V3"},
+                        {"id": "u1.3", "number": "3", "name": "GND"},
+                    ],
+                }
+            ],
+            "nets": [{"id": "n0", "name": "GND", "connections": ["u1.1", "u1.2", "u1.3"]}],
+        },
+        "validation_issues": [],
+    }
+    assert summarize_design(response)["nets"][0]["connections"] == ["U1.1", "U1.3V3", "U1.3"]

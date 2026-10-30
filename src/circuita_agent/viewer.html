@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>circuita-agent run viewer</title>
+<style>
+:root {
+  --paper: #e8ece7; --sheet: #f5f7f3; --ink: #17262e; --soft: #55656c; --line: #c4cdc7;
+  --grid: #dbe1db; --red: #b3261e; --red-bg: #f6dedb; --teal: #0d6b5f; --teal-bg: #d6ebe5;
+  --amber: #8a5a00; --amber-bg: #f3e6c6;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #12191d; --sheet: #1a2429; --ink: #e3ebe6; --soft: #93a4a9; --line: #33434a;
+    --grid: #1b262b; --red: #ff8a80; --red-bg: #3d1f1e; --teal: #5fd1bd; --teal-bg: #15372f;
+    --amber: #e8b655; --amber-bg: #3a2e12;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; color: var(--ink); font: 15px/1.5 var(--sans); background-color: var(--paper);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+main { max-width: 1120px; margin: 0 auto; padding: 0 16px 64px; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.banner { background: var(--amber-bg); color: var(--amber); padding: 8px 16px; text-align: center;
+  font-size: 14px; border-bottom: 1px solid var(--amber); }
+.hero { padding: 40px 0 20px; }
+.hero .label { color: var(--soft); font-size: 13px; margin: 0 0 6px; }
+.hero h1 { font: 400 clamp(26px, 4.2vw, 44px)/1.2 var(--serif); margin: 0; max-width: 28ch;
+  letter-spacing: -0.01em; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 16px; color: var(--soft);
+  font-size: 14px; }
+.meta b { color: var(--ink); font-weight: 600; }
+.verdict-ok { color: var(--teal); } .verdict-bad { color: var(--red); }
+.panel { background: var(--sheet); border: 1px solid var(--line); border-radius: 6px; }
+.converge { padding: 14px 18px 10px; margin-bottom: 16px; }
+.converge h2, .sheet h2, .rail h2 { font: 600 14px var(--sans); margin: 0 0 10px; }
+.bars { display: flex; align-items: flex-end; gap: 10px; height: 96px; }
+.bar { flex: 0 0 auto; width: 56px; height: 100%; display: flex; flex-direction: column;
+  justify-content: flex-end; align-items: center; background: none; border: 0; padding: 0; }
+.bar i { display: block; width: 28px; background: var(--red); border-radius: 2px 2px 0 0;
+  min-height: 3px; transition: height .3s; }
+.bar.zero i { background: var(--teal); }
+.bar span { font-size: 12px; color: var(--soft); margin-top: 4px; white-space: nowrap; }
+.bar .n { font: 600 12px var(--mono); color: var(--ink); margin-bottom: 2px; }
+.bar.on span { color: var(--ink); font-weight: 600; }
+.bar.on i { box-shadow: 0 0 0 2px var(--sheet), 0 0 0 4px var(--ink); }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 16px; }
+.controls button { border: 1px solid var(--ink); background: var(--sheet); border-radius: 4px;
+  padding: 6px 14px; }
+.controls button.primary { background: var(--ink); color: var(--sheet); }
+.controls button:disabled { opacity: .4; cursor: default; }
+.controls .hint { color: var(--soft); font-size: 13px; margin-left: auto; }
+.cols { display: grid; grid-template-columns: 320px 1fr; gap: 16px; align-items: start; }
+@media (max-width: 820px) { .cols { grid-template-columns: 1fr; } .controls .hint { display: none; } }
+.rail { padding: 14px 8px 8px; }
+.rail h2 { padding: 0 10px; }
+.rail ol { list-style: none; margin: 0; padding: 0; }
+.rail li button { width: 100%; text-align: left; background: none; border: 0;
+  border-left: 3px solid transparent; padding: 8px 10px; border-radius: 0 4px 4px 0; }
+.rail li.on button { background: var(--paper); border-left-color: var(--ink); }
+.rail li.future { opacity: .45; }
+.rail .tool { font: 600 13px var(--mono); }
+.rail .out { font-size: 13px; color: var(--soft); display: block; }
+.out.bad { color: var(--red); } .out.good { color: var(--teal); }
+.sheet { padding: 18px; min-width: 0; }
+.sheet h3 { font: 600 13px var(--sans); color: var(--soft); margin: 20px 0 8px; }
+.sheet h3:first-of-type { margin-top: 0; }
+.msg { margin: 0 0 12px; color: var(--soft); }
+.issues { list-style: none; margin: 0; padding: 0; }
+.issues li { padding: 8px 10px; border-left: 3px solid var(--red); background: var(--red-bg);
+  margin-bottom: 6px; border-radius: 0 4px 4px 0; font-size: 14px; }
+.issues li.warning { border-left-color: var(--amber); background: var(--amber-bg); }
+.issues code { font: 600 12px var(--mono); display: block; }
+.parts { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
+.part { border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; background: var(--paper); }
+.part.new { border-color: var(--teal); background: var(--teal-bg); }
+.part.changed { border-color: var(--amber); background: var(--amber-bg); }
+.part b { font: 600 14px var(--mono); }
+.part .val { color: var(--soft); font-size: 13px; }
+.part .pins { font: 12px/1.6 var(--mono); color: var(--soft); margin-top: 4px; word-break: break-word; }
+.net { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: baseline; padding: 6px 0;
+  border-top: 1px dashed var(--line); }
+.net .nm { font: 600 13px var(--mono); min-width: 110px; }
+.net.new .nm::before { content: "new "; color: var(--teal); font-weight: 400; }
+.net.changed .nm::before { content: "edited "; color: var(--amber); font-weight: 400; }
+.chip { font: 12px var(--mono); border: 1px solid var(--line); border-radius: 10px; padding: 0 7px;
+  background: var(--paper); }
+.chip.add { border-color: var(--teal); background: var(--teal-bg); }
+.gone { text-decoration: line-through; color: var(--soft); }
+details { margin-top: 18px; } summary { cursor: pointer; color: var(--soft); font-size: 13px; }
+pre { font: 12px/1.5 var(--mono); background: var(--paper); border: 1px solid var(--line);
+  border-radius: 4px; padding: 10px; overflow: auto; max-height: 260px; margin: 8px 0 0; }
+.final { margin-top: 20px; padding: 12px 14px; border-left: 3px solid var(--teal);
+  background: var(--paper); white-space: pre-wrap; font: 15px/1.6 var(--serif); }
+.drop { margin: 80px auto; max-width: 520px; padding: 40px 24px; text-align: center;
+  border: 2px dashed var(--soft); border-radius: 8px; background: var(--sheet); }
+.drop h1 { font: 400 28px var(--serif); margin: 0 0 8px; }
+@media (prefers-reduced-motion: reduce) { .bar i { transition: none; } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script id="run-data" type="application/json">__RUN_JSON__</script>
+<script>
+"use strict";
+function el(tag, cls, text) {
+  const node = document.createElement(tag);
+  if (cls) node.className = cls;
+  if (text !== undefined && text !== null) node.textContent = String(text);
+  return node;
+}
+const app = document.getElementById("app");
+let record = null, cursor = 0, timer = null;
+let designSteps = [];
+
+function init() {
+  const raw = document.getElementById("run-data").textContent.trim();
+  if (raw && raw !== "__RUN_JSON__") {
+    try { return load(JSON.parse(raw)); } catch (e) { /* fall through to the drop zone */ }
+  }
+  showDrop();
+}
+
+function showDrop() {
+  app.replaceChildren();
+  const box = el("div", "drop");
+  box.append(el("h1", "", "Open a saved run"),
+    el("p", "", "Drop a file made with `circuita-agent run ... --save run.json` here."));
+  const input = el("input"); input.type = "file"; input.accept = ".json,application/json";
+  input.addEventListener("change", () => readFile(input.files[0]));
+  box.append(input);
+  box.addEventListener("dragover", (e) => e.preventDefault());
+  box.addEventListener("drop", (e) => { e.preventDefault(); readFile(e.dataTransfer.files[0]); });
+  app.append(box);
+}
+
+function readFile(file) {
+  if (!file) return;
+  file.text().then((text) => {
+    try { load(JSON.parse(text)); } catch (e) { alert("That file is not a saved run."); }
+  });
+}
+
+function designOf(step) {
+  return step && step.result && Array.isArray(step.result.components) ? step.result : null;
+}
+
+function load(rec) {
+  const result = rec.result || rec;
+  record = { simulated: !!rec.simulated, model: rec.model || "", cost: rec.cost_usd, result };
+  designSteps = [];
+  result.steps.forEach((s, i) => { if (designOf(s)) designSteps.push(i); });
+  cursor = 0; stop(); render();
+}
+
+function stop() { if (timer) { clearInterval(timer); timer = null; } }
+function play() {
+  const steps = record.result.steps;
+  if (cursor >= steps.length - 1) cursor = 0;
+  stop(); render();
+  timer = setInterval(() => {
+    if (cursor < steps.length - 1) { cursor += 1; render(); } else { stop(); render(); }
+  }, 1500);
+  render();
+}
+function go(i) { stop(); cursor = Math.max(0, Math.min(record.result.steps.length - 1, i)); render(); }
+
+function outcome(step) {
+  const r = step.result;
+  if (r.error) return { text: "error: " + r.error, cls: "bad" };
+  if (designOf(step)) {
+    const plural = (n, w) => n + " " + w + (n === 1 ? "" : "s");
+    const text = plural(r.errors, "error") + ", " + plural(r.warnings, "warning");
+    return { text, cls: r.errors ? "bad" : "good" };
+  }
+  if (r.exported) return { text: "saved a KiCad file", cls: "good" };
+  return { text: "ok", cls: "" };
+}
+
+function latestDesign(upTo) {
+  for (let i = upTo; i >= 0; i--) { const d = designOf(record.result.steps[i]); if (d) return i; }
+  return -1;
+}
+
+function previousDesign(idx) {
+  for (let i = idx - 1; i >= 0; i--) { const d = designOf(record.result.steps[i]); if (d) return d; }
+  return null;
+}
+
+function render() {
+  const res = record.result, steps = res.steps;
+  app.replaceChildren();
+  if (record.simulated) {
+    app.append(el("div", "banner",
+      "Simulated run: scripted example, not output from a real model. Record a real one with --save."));
+  }
+  const main = el("main");
+  app.append(main);
+
+  const hero = el("section", "hero");
+  hero.append(el("p", "label", "Request"), el("h1", "", res.task));
+  const meta = el("div", "meta");
+  const ok = res.success;
+  const v = el("span", ok ? "verdict-ok" : "verdict-bad");
+  v.append(el("b", "", ok ? "Circuit passes validation" : "Not solved (" + res.stopped + ")"));
+  meta.append(v);
+  const bits = [];
+  if (record.model) bits.push(["Model", record.model]);
+  bits.push(["Turns", res.turns], ["Tokens", res.prompt_tokens + res.completion_tokens]);
+  if (typeof record.cost === "number") bits.push(["Cost", "~$" + record.cost.toFixed(3)]);
+  bits.forEach(([k, val]) => { const s = el("span", "", k + " "); s.append(el("b", "", val)); meta.append(s); });
+  hero.append(meta);
+  main.append(hero);
+
+  // Convergence strip: one bar per validation, height = number of errors.
+  const conv = el("section", "panel converge");
+  conv.append(el("h2", "", "Errors after each check"));
+  const bars = el("div", "bars");
+  const maxErr = Math.max(1, ...designSteps.map((i) => steps[i].result.errors));
+  const curDesign = latestDesign(cursor);
+  designSteps.forEach((i) => {
+    const errs = steps[i].result.errors;
+    const b = el("button", "bar" + (errs === 0 ? " zero" : "") + (i === curDesign ? " on" : ""));
+    b.type = "button";
+    b.setAttribute("aria-label", "Step " + (i + 1) + ": " + errs + " errors");
+    b.append(el("div", "n", errs));
+    const bar = el("i"); bar.style.height = (errs === 0 ? 3 : 8 + (errs / maxErr) * 52) + "px";
+    b.append(bar, el("span", "", "step " + (i + 1)));
+    b.addEventListener("click", () => go(i));
+    bars.append(b);
+  });
+  if (!designSteps.length) bars.append(el("span", "msg", "The model never produced a circuit."));
+  conv.append(bars);
+  main.append(conv);
+
+  const ctl = el("div", "controls");
+  const prev = el("button", "", "Back"); prev.disabled = cursor === 0;
+  prev.addEventListener("click", () => go(cursor - 1));
+  const next = el("button", "", "Next"); next.disabled = cursor >= steps.length - 1;
+  next.addEventListener("click", () => go(cursor + 1));
+  const pl = el("button", "primary", timer ? "Pause" : "Play");
+  pl.addEventListener("click", () => { if (timer) { stop(); render(); } else play(); });
+  ctl.append(pl, prev, next, el("span", "hint", "Keys: space plays, left and right arrows step"));
+  main.append(ctl);
+
+  const cols = el("div", "cols");
+  const rail = el("nav", "panel rail"); rail.setAttribute("aria-label", "Agent steps");
+  rail.append(el("h2", "", "What the agent did"));
+  const ol = el("ol");
+  steps.forEach((s, i) => {
+    const li = el("li", i === cursor ? "on" : i > cursor ? "future" : "");
+    const btn = el("button"); btn.type = "button";
+    if (i === cursor) btn.setAttribute("aria-current", "step");
+    const o = outcome(s);
+    btn.append(el("span", "tool", (i + 1) + ". " + s.tool), el("span", "out " + o.cls, o.text));
+    btn.addEventListener("click", () => go(i));
+    li.append(btn); ol.append(li);
+  });
+  rail.append(ol);
+  cols.append(rail, sheet(res, steps));
+  main.append(cols);
+}
+
+function key(c) { return JSON.stringify([c.value, c.mpn, c.pins]); }
+
+function sheet(res, steps) {
+  const box = el("section", "panel sheet");
+  const step = steps[cursor];
+  const idx = latestDesign(cursor);
+  const design = idx >= 0 ? steps[idx].result : null;
+  const before = idx >= 0 ? previousDesign(idx) : null;
+
+  box.append(el("h2", "", "Step " + (cursor + 1) + ": " + step.tool));
+  const o = outcome(step);
+  box.append(el("p", "msg", o.text + (design ? "" : " (circuit shown below is from the last check)")));
+
+  if (design) {
+    const iss = design.issues || [];
+    box.append(el("h3", "", iss.length ? "Problems found" : "Problems found: none"));
+    if (iss.length) {
+      const ul = el("ul", "issues");
+      iss.forEach((i) => {
+        const li = el("li", i.severity === "error" ? "" : "warning");
+        li.append(el("code", "", i.severity + " " + i.code), document.createTextNode(i.message));
+        ul.append(li);
+      });
+      box.append(ul);
+    }
+
+    const oldParts = new Map((before ? before.components : []).map((c) => [c.reference, c]));
+    box.append(el("h3", "", "Parts (" + design.components.length + ")"));
+    const grid = el("div", "parts");
+    design.components.forEach((c) => {
+      const old = oldParts.get(c.reference);
+      const state = !before ? "" : !old ? " new" : key(old) !== key(c) ? " changed" : "";
+      const p = el("div", "part" + state);
+      p.append(el("b", "", c.reference), el("div", "val", [c.category, c.value, c.mpn].filter(Boolean).join(", ")),
+        el("div", "pins", c.pins.join("  ")));
+      grid.append(p);
+    });
+    box.append(grid);
+
+    const oldNets = new Map((before ? before.nets : []).map((n) => [n.name, n]));
+    box.append(el("h3", "", "Connections (" + design.nets.length + ")"));
+    design.nets.forEach((n) => {
+      const old = oldNets.get(n.name);
+      const oldSet = new Set(old ? old.connections : []);
+      const same = old && old.connections.length === n.connections.length &&
+        n.connections.every((c) => oldSet.has(c));
+      const state = !before ? "" : !old ? " new" : same ? "" : " changed";
+      const row = el("div", "net" + state);
+      row.append(el("span", "nm", n.name));
+      n.connections.forEach((c) => row.append(el("span", "chip" + (before && !oldSet.has(c) ? " add" : ""), c)));
+      box.append(row);
+    });
+    if (before) {
+      const names = new Set(design.nets.map((n) => n.name));
+      const gone = before.nets.filter((n) => !names.has(n.name));
+      gone.forEach((n) => {
+        const row = el("div", "net");
+        row.append(el("span", "nm gone", n.name), el("span", "msg", "removed"));
+        box.append(row);
+      });
+    }
+  }
+
+  const det = el("details");
+  det.append(el("summary", "", "What the agent sent and received"));
+  det.append(el("pre", "", JSON.stringify({ arguments: step.arguments, result: step.result }, null, 2)));
+  box.append(det);
+
+  if (cursor === steps.length - 1 && res.final_text) box.append(el("div", "final", res.final_text));
+  if (res.error_message && cursor === steps.length - 1) box.append(el("p", "msg", res.error_message));
+  return box;
+}
+
+document.addEventListener("keydown", (e) => {
+  if (!record) return;
+  if (e.key === "ArrowRight") go(cursor + 1);
+  else if (e.key === "ArrowLeft") go(cursor - 1);
+  else if (e.key === " " && e.target.tagName !== "BUTTON") { e.preventDefault(); timer ? (stop(), render()) : play(); }
+});
+init();
+</script>
+</body>
+</html>
